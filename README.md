@@ -63,6 +63,35 @@ ARG AGENTGATEWAY_VERSION=v1.6.0
 Check <https://github.com/agentgateway/agentgateway/releases> for the tag, then
 redeploy the app in NaN. Resource definitions stored in Postgres carry over.
 
+## Fallback database (`db/`)
+
+If the existing Postgres can't be used (missing extension, wrong port, no
+primary), `db/` is a plain PostgreSQL 17 image you can deploy as its own app in
+the same Space.
+
+Deploy it as a **worker** app (no HTTP port), Dockerfile path `db/Dockerfile`,
+with:
+
+| | |
+|---|---|
+| env | `POSTGRES_PASSWORD` (required), `POSTGRES_USER=agentgateway`, `POSTGRES_DB=agentgateway` |
+| volume | persistent, mounted at `/var/lib/postgresql/data` |
+| resources | 500m / 512Mi is enough for a single gateway |
+
+Then set the gateway's `DATABASE_URL` to that app's service host and port 5432:
+
+```
+DATABASE_URL=postgres://agentgateway:PASSWORD@<db-app-service>:5432/agentgateway?sslmode=disable
+```
+
+`sslmode=disable` because this image serves plaintext inside the Space; the
+managed cluster in front of the current `-pg-rw` service is TLS-enabled and
+uses `sslmode=require`. If the app is redeployed with an empty volume, the
+schema is recreated on the gateway's next start; with the volume it persists.
+
+The image runs `init.sql` on first boot only (creates `pgcrypto`; the database
+and role come from the `POSTGRES_*` env).
+
 ## Troubleshooting
 
 `Error: failed to connect postgres database / pool timed out while waiting for an
