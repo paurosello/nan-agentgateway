@@ -16,9 +16,11 @@
 #   POSTGRES_DB=agentgateway
 FROM postgres:17-alpine
 
-# Keep the cluster in a subdirectory of the mount point so a volume that
-# already contains files (e.g. lost+found) does not block initdb.
-ENV PGDATA=/var/lib/postgresql/data/pgdata
+# NaN's persistent storage is always mounted at /data (a PVC counted against
+# the Space's disk quota), so the cluster lives in a subdirectory of it. The
+# subdirectory also keeps initdb happy if the mount contains files such as
+# lost+found.
+ENV PGDATA=/data/pgdata
 
 # First-boot only: runs once, when PGDATA is empty.
 COPY init.sql /docker-entrypoint-initdb.d/10-agentgateway.sql

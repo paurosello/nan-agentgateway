@@ -75,7 +75,7 @@ with:
 | | |
 |---|---|
 | env | `POSTGRES_PASSWORD` (required), `POSTGRES_USER=agentgateway`, `POSTGRES_DB=agentgateway` |
-| volume | persistent, mounted at `/var/lib/postgresql/data` |
+| storage | enable **Persistent storage** (NaN mounts it at `/data`; the image keeps the cluster in `/data/pgdata`) |
 | resources | 500m / 512Mi is enough for a single gateway |
 
 Then set the gateway's `DATABASE_URL` to that app's service host and port 5432:
