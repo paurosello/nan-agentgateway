@@ -106,7 +106,10 @@ policy blocks the port between the two apps.
 
 `debug/Dockerfile` is a throwaway probe image that checks it from inside the
 same Space. Deploy it as a second app (worker mode, no HTTP port, Dockerfile
-path `debug/Dockerfile`, env `DB_HOST`/`DB_PORT`), read its logs, then delete it.
+path `debug/Dockerfile`, env `DB_HOSTS`), read its logs, then delete it.
+`DB_HOSTS` takes a comma-separated `host:port` list; by default it checks the
+managed DB plus the gateway app's own service name, and it prints the pod
+hostname and platform env vars so the real service naming is visible.
 
 ## Run it locally
 
