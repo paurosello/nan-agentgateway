@@ -63,6 +63,22 @@ ARG AGENTGATEWAY_VERSION=v1.6.0
 Check <https://github.com/agentgateway/agentgateway/releases> for the tag, then
 redeploy the app in NaN. Resource definitions stored in Postgres carry over.
 
+## Troubleshooting
+
+`Error: failed to connect postgres database / pool timed out while waiting for an
+open connection` means the TCP connection to `DATABASE_URL` never opened. It is
+not a bad password: authentication failures surface immediately as
+`password authentication failed`. DNS is also fine in this case — a broken
+hostname reports `failed to lookup address information: Name does not resolve`.
+
+So the DB host resolves but nothing accepts the connection on that port. Usual
+causes: the database app is stopped / has no ready endpoint, or a network
+policy blocks the port between the two apps.
+
+`debug/Dockerfile` is a throwaway probe image that checks it from inside the
+same Space. Deploy it as a second app (worker mode, no HTTP port, Dockerfile
+path `debug/Dockerfile`, env `DB_HOST`/`DB_PORT`), read its logs, then delete it.
+
 ## Run it locally
 
 ```sh
