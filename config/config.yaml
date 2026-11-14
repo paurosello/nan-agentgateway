@@ -5,14 +5,16 @@
 # Environment-variable references written as dollar-brace VAR are expanded from
 # the container environment at startup (the expansion runs before YAML parsing,
 # so even comments must not contain that syntax).
-# If DATABASE_URL is missing the process exits immediately with
-#   "error looking key 'DATABASE_URL' up: environment variable not found"
-# which is the intended fail-fast behaviour (NaN shows it in the app logs).
+#
+# DATABASE_URL defaults to sqlite:///data/agentgateway.db in the image, i.e. a
+# SQLite file on NaN's persistent volume. Point it at a postgres:// (or
+# postgresql://) URL to use Postgres instead; anything else is treated as a
+# SQLite path. On SQLite, run exactly one replica.
 #
 # hybrid storage: this file is a read-only baseline; anything you add or edit
-# in the UI (LLM providers, models, MCP targets, routes) is stored in Postgres
-# and merged over the file at read time. So UI changes survive restarts and
-# redeploys without baking secrets into the image.
+# in the UI (LLM providers, models, MCP targets, routes) is stored in the
+# database and merged over the file at read time. So UI changes survive
+# restarts and redeploys without baking secrets into the image.
 
 config:
   storage:
