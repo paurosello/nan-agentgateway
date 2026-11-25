@@ -57,11 +57,15 @@ The home page shows a matching warning banner.
 Generate a credential line:
 
 ```sh
-./scripts/htpasswd.sh alice
+./scripts/generate-config.sh            # everything below, hashed and filled in
+./scripts/htpasswd.sh alice             # only the credential line
 ```
 
-Then in the UI: **Settings → UI → UI access policies → Add → Basic auth** (the
-home page banner's *Configure UI policies* button links to the same page):
+`generate-config.sh` prompts for the password and prints copy-paste blocks for
+this policy, the provider, the model, and the full config file — already in the
+form each editor expects. Then in the UI: **Settings → UI → UI access policies →
+Add → Basic auth** (the home page banner's *Configure UI policies* button links
+to the same page):
 
 | Field | Value |
 |---|---|
@@ -81,7 +85,9 @@ curl -s -o /dev/null -w 'with pw %{http_code}\n' -u alice:'<pw>' $H/ui    # 200
 The policy is stored in the database (`ui.policy`), so it survives restarts and
 redeploys. Paste the line **exactly as generated**: resources saved through the
 UI are never environment-expanded, so `$2y$...` stays as-is. Only the config
-*file* needs `$$` escaping.
+*file* needs `$$` escaping — and getting that wrong is loud, not silent: a raw
+`$2y$...` in `config/config.yaml` stops the gateway from starting with
+`error looking key '2y' up: environment variable not found`.
 
 Prefer single sign-on? The same page offers OIDC (`oidc`), JWT, and external
 authorization. OIDC needs an OIDC-capable provider (Google, Okta, Auth0,

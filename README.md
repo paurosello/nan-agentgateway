@@ -176,6 +176,7 @@ builds against the same glibc-dynamic runtime. The binary now requires
 - `config/config.yaml` — baseline config (storage `hybrid`, DB URL from env, UI on 4000).
 - `docs/self-service.md` — deploying your own instance, enabling auth, and lockout recovery.
 - `scripts/htpasswd.sh` — generates a Basic Auth line for the UI (and the escaped form for the file).
+- `scripts/generate-config.sh` — one command for every copy-paste YAML block (auth policy, provider, model, full config).
 - `docker-entrypoint.sh` — /data ownership fix + privilege drop.
 - `db/` — fallback PostgreSQL image (only needed if you prefer Postgres).
 - `debug/` — connectivity probe app for in-Space DNS/TCP troubleshooting.
