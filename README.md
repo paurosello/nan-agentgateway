@@ -19,7 +19,7 @@ Run your own [agentgateway](https://agentgateway.dev) (v1.7.0, OSS) on [NaN Clou
 
 ### 1. Fork & deploy on NaN Cloud
 
-Fork this repo (so you can tweak [config/config.yaml](config/config.yaml) or [config/model-catalog.json](config/model-catalog.json) anytime), then in [NaN Cloud](https://cloud.nan.builders/spaces) go to **Space → New App**:
+Fork `paurosello/nan-agentgateway` to your GitHub account (required by NaN Cloud's GitHub App; see [Keeping your fork up to date](docs/updating.md) to pull agentgateway upgrades and rate updates later). Then in [NaN Cloud](https://cloud.nan.builders/spaces), go to **Space → New App**:
 
 | Setting | Value |
 |---|---|
@@ -79,4 +79,5 @@ curl https://<app>-<space>.apps.nan.builders/v1/chat/completions \
 |---|---|
 | [Budgets, Virtual Keys & NaN Credits](docs/budgets-and-keys.md) | 1 credit = $1 catalog, setting per-key credit caps (`429`), flash-only keys, metadata & Analytics |
 | [Adding MCP Servers](docs/mcp.md) | Adding remote Streamable HTTP / SSE MCP servers, upstream auth, Tool Playground, and client setup |
+| [Keeping Your Fork Up to Date](docs/updating.md) | 1-click GitHub Sync fork & CLI instructions to pull agentgateway upgrades and credit rate updates |
 | [Full Self-Service & Operations Guide](docs/self-service.md) | OIDC/Basic auth details, Postgres, upgrading agentgateway, backups, troubleshooting & lockout recovery |

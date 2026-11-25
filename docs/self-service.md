@@ -16,14 +16,14 @@ guide — ask them for a virtual key.
 
 ## 1. Deploy
 
-Fork `paurosello/nan-agentgateway` if you want to customize the default provider
-or models in `config/config.yaml` (or deploy it directly as-is). In
-[NaN Cloud](https://cloud.nan.builders/spaces), open or create a Space, then
-**New App**:
+Fork `paurosello/nan-agentgateway` to your GitHub account (required by NaN
+Cloud's GitHub App — see [docs/updating.md](updating.md) for how to sync
+upstream updates later). In [NaN Cloud](https://cloud.nan.builders/spaces),
+open or create a Space, then **New App**:
 
 | Field | Value |
 |---|---|
-| Repository | your fork of `paurosello/nan-agentgateway` (or `paurosello/nan-agentgateway` directly; authorize it for the NaN GitHub App) |
+| Repository | your fork of `paurosello/nan-agentgateway` (authorize it for the NaN GitHub App) |
 | Branch | `main` |
 | Dockerfile | `Dockerfile` |
 | App name | anything, e.g. `my-gateway` (it becomes part of the URL) |
