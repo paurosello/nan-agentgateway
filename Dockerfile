@@ -26,9 +26,7 @@ RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh \
  && mkdir -p /data \
  && chown 65532:65532 /data
 
-# Default: SQLite on NaN's persistent volume (always mounted at /data). Keep
-# replicas at 1 while on SQLite. Override with a postgres:// or postgresql:// URL
-# to use Postgres instead — no rebuild needed.
+# SQLite on NaN's persistent volume (mounted at /data). Keep replicas at 1.
 ENV DATABASE_URL=sqlite:///data/agentgateway.db
 
 # Match the upstream image's environment: explicit trust store, and the flag that

@@ -7,9 +7,7 @@
 # so even comments must not contain that syntax).
 #
 # DATABASE_URL defaults to sqlite:///data/agentgateway.db in the image, i.e. a
-# SQLite file on NaN's persistent volume. Point it at a postgres:// (or
-# postgresql://) URL to use Postgres instead; anything else is treated as a
-# SQLite path. On SQLite, run exactly one replica.
+# SQLite file on NaN's persistent volume. Keep replicas at 1.
 #
 # hybrid storage: this file is a read-only baseline; anything you add or edit
 # in the UI (LLM providers, models, MCP targets, routes, auth policies) is

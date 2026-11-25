@@ -62,15 +62,14 @@ The home page shows a matching warning banner.
 Generate the Basic Auth YAML block:
 
 ```sh
-./scripts/htpasswd.sh alice             # ready-to-paste Basic auth YAML
-./scripts/generate-config.sh            # same, plus full config.yaml template
+./scripts/htpasswd.sh alice
 ```
 
-Both scripts prompt for the password and print copy-paste YAML blocks already in
-the form each editor expects. Then in the UI: **Settings → UI → UI access
-policies → Basic auth** (the home page banner's *Configure UI policies* button
-links to the same page), toggle raw (`<>`) mode, paste the block, and save — or
-fill the form fields:
+The script prompts for a password and prints a copy-paste YAML block already in
+the exact form the UI editor expects. Then in the UI: **Settings → UI → UI
+access policies → Basic auth** (the home page banner's *Configure UI policies*
+button links to the same page), toggle raw (`<>`) mode, paste the block, and
+save — or fill the form fields:
 
 ![Settings UI access policies](images/ui-auth.png)
 
@@ -215,25 +214,7 @@ Telling the failures apart:
   untouched, while the resources in the old database (extra models, keys,
   policies) are not loaded. Set the original `DATABASE_URL` again once you have
   a working policy.
-- **Stay on one replica.** Two processes on one SQLite file corrupt it. Switch
-  to Postgres (below) before scaling out.
-
-## Switching to Postgres
-
-The same image works with Postgres — override the env var and bump replicas if
-needed:
-
-```
-DATABASE_URL=postgres://USER:***@HOST:5432/DBNAME
-```
-
-The database user needs `CREATE TABLE` rights so agentgateway can create its
-schema on first start. `db/` contains a plain PostgreSQL 17 image you can deploy
-as a worker app in the same Space (`POSTGRES_PASSWORD`,
-`POSTGRES_USER=agentgateway`, `POSTGRES_DB=agentgateway`, persistent storage
-enabled at `/data`). If scaling to multiple replicas, also set a shared
-`SESSION_KEY` environment variable so MCP session encryption keys match across
-pods.
+- **Stay on one replica.** Two processes on one SQLite file will corrupt it.
 
 ### Why `docker-entrypoint.sh` exists
 

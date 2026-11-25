@@ -116,8 +116,6 @@ fi
 if [ "$(id -u)" = "0" ]; then
   url="${DATABASE_URL:-}"
   case "$url" in
-    postgres://*|postgresql://*)
-      ;; # Postgres owns its own permissions; nothing to do here.
     sqlite:*)
       dbpath="${url#sqlite://}"
       dbpath="${dbpath#sqlite:}"
