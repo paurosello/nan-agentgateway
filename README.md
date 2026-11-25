@@ -139,6 +139,12 @@ That is also what happens if the app was created without *Persistent storage*:
 `/data` is then container-local and every redeploy starts from an empty
 database.
 
+Persistent storage is chosen in **Advanced options of the New App form**. The
+post-creation settings panel edits branch, Dockerfile, port, and resources only,
+so an app that was created without it has to be **recreated** to get one. Add it
+to the new app, then recreate with the same app name in the same Space to keep
+the same `<app>-<space>.apps.nan.builders` URL.
+
 ```dockerfile
 ARG AGENTGATEWAY_VERSION=v1.7.0
 ```

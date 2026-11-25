@@ -26,7 +26,7 @@ In [NaN Cloud](https://cloud.nan.builders/spaces), open or create a Space, then
 | Dockerfile | `Dockerfile` |
 | App name | anything, e.g. `my-gateway` (it becomes part of the URL) |
 | Expose over HTTP | on, port **4000** |
-| Persistent storage | **on** (NaN mounts it at `/data`) |
+| Persistent storage | **on** (required; NaN mounts it at `/data`) |
 | Replicas | **1** (SQLite must not be shared) |
 | Resources | `500m` / `512Mi` is enough |
 | Environment | `NAN_API_KEY` = your NaN API key (optional now, used in step 3) |
@@ -36,6 +36,12 @@ Wait for `Running`, then open:
 ```
 https://<app>-<space>.apps.nan.builders/ui
 ```
+
+> **Storage is a creation-time choice.** Persistent storage can only be chosen
+> in the New App form. The app settings panel edits branch, Dockerfile, port, and
+> resources, not storage. If you deployed without it, delete the app and create
+> it again with the same name in the same Space — the URL stays the same — then
+> re-add your configuration.
 
 > **Config-only customization:** deploying this repo directly is fine. If you
 > also want to change the image, entrypoint, or baseline config, fork first and
