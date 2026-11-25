@@ -90,6 +90,28 @@
             "cacheRead": "0.21",
             "output": "42.00"
           }
+        },
+        "qwen3.6": {
+          "name": "Qwen 3.6",
+          "rates": {
+            "input": "0",
+            "cacheRead": "0",
+            "output": "0"
+          }
+        },
+        "gemma4": {
+          "name": "Gemma 4",
+          "rates": {
+            "input": "0",
+            "cacheRead": "0",
+            "output": "0"
+          }
+        },
+        "qwen3-embedding": {
+          "name": "Qwen 3 Embedding",
+          "rates": {
+            "input": "0"
+          }
         }
       }
     }

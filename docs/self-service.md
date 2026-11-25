@@ -139,17 +139,21 @@ step 2. Keep both on.
 
 `config/config.yaml` ships with:
 
-- **Provider `NaN`**: `custom` (`completions` format), `baseUrl: https://api.nan.builders/v1`,
+- **Provider `NaN`**: `custom` (`completions` and `embeddings` formats —
+  agentgateway also translates Anthropic `/v1/messages` and OpenAI
+  `/v1/responses` to `completions` automatically), `baseUrl: https://api.nan.builders/v1`,
   and `apiKey: "${NAN_API_KEY}"`. The image defaults `NAN_API_KEY=""` so the
   gateway still boots when it is unset, and `/api/config` returns the
   unexpanded `${NAN_API_KEY}` reference rather than the raw secret.
 - **Discovered models**: on startup, when `NAN_API_KEY` is set,
   `docker-entrypoint.sh` queries `https://api.nan.builders/v1/models` and
-  injects every model available to your key into `llm.models[]` so they appear
-  in `GET /v1/models`, `GET /models`, the UI Playground, and Virtual API Key
-  allowed-models pickers. Redeploy/restart to refresh after NaN adds new
-  models. Set `NAN_DISCOVER_MODELS=false` to disable (or `NAN_MODELS_URL` to
-  override the URL). Any fetch failure falls back cleanly to `NaN/*` and `*`.
+  injects every chat/embedding model available to your key into `llm.models[]`
+  (filtering out audio/TTS/STT entries like `whisper` so they do not clutter
+  chat pickers) so they appear in `GET /v1/models`, `GET /models`, the UI
+  Playground, and Virtual API Key allowed-models pickers. Redeploy/restart to
+  refresh after NaN adds new models. Set `NAN_DISCOVER_MODELS=false` to disable
+  (or `NAN_MODELS_URL` to override the URL). Any fetch failure falls back
+  cleanly to `NaN/*` and `*`.
 - **Model `NaN/*`**: strips the `NaN/` prefix and forwards to `NaN`.
 - **Model `*`**: catch-all that forwards bare model names straight to `NaN`
   (including newly added models before the next restart).
@@ -158,10 +162,10 @@ step 2. Keep both on.
   so Analytics costs and Virtual API Key USD budgets map directly to your NaN
   credit pool (e.g. a `$500` key budget caps that key at 500 credits out of
   7,000). Edit `config/model-catalog.json` in your fork if NaN updates rates.
-- **Route `rewrite-chat-completions`**: rewrites `POST /chat/completions` to
-  `/v1/chat/completions` internally so clients whose base URL omits `/v1` still
-  record full Analytics, tokens, and budgets instead of falling back to
-  passthrough.
+- **Non-`/v1` path rewrites**: internally rewrites `/chat/completions`,
+  `/responses`, `/messages`, and `/embeddings` to `/v1/...` so clients whose
+  base URL omits `/v1` still record full Analytics, tokens, and budgets instead
+  of falling back to passthrough.
 
 Because these live in `config/config.yaml`, they are **file-owned** (read-only
 in the UI):

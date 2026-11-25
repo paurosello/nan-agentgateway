@@ -202,6 +202,7 @@ llm:
         custom:
           formats:
             - type: completions
+            - type: embeddings
       params:
         baseUrl: ${base_url}
         apiKey: "\${${env_var}}"
@@ -226,6 +227,36 @@ routes:
       urlRewrite:
         path:
           full: /v1/chat/completions
+    backends:
+      - host: 127.0.0.1:${port}
+  - name: rewrite-responses
+    matches:
+      - path:
+          exact: /responses
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/responses
+    backends:
+      - host: 127.0.0.1:${port}
+  - name: rewrite-messages
+    matches:
+      - path:
+          exact: /messages
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/messages
+    backends:
+      - host: 127.0.0.1:${port}
+  - name: rewrite-embeddings
+    matches:
+      - path:
+          exact: /embeddings
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/embeddings
     backends:
       - host: 127.0.0.1:${port}
 

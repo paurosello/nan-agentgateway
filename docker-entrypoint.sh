@@ -49,7 +49,12 @@ discover_models() {
     return 1
   fi
 
-  count="$(jq -r '[.data[]? | .id | select(type == "string" and length > 0 and . != "*" and . != "NaN/*")] | unique | length' "$raw_json" 2>/dev/null || echo 0)"
+  # Only register chat and embedding models (skip audio/TTS/STT/image entries
+  # like whisper or kokoro so they do not clutter chat pickers; * still routes
+  # anything directly if needed).
+  jq_filter='[.data[]? | select(.mode == null or .mode == "chat" or .mode == "embedding") | .id | select(type == "string" and length > 0 and . != "*" and . != "NaN/*")] | unique'
+
+  count="$(jq -r "${jq_filter} | length" "$raw_json" 2>/dev/null || echo 0)"
   if [ -z "$count" ] || [ "$count" = "0" ]; then
     echo "[entrypoint] warning: no models returned by ${models_url}; using baseline models"
     rm -f "$raw_json" "$snippet"
@@ -57,7 +62,7 @@ discover_models() {
   fi
 
   # Escape '$' as '$$' because agentgateway runs pre-YAML env expansion on the file.
-  if ! jq -r '[.data[]? | .id | select(type == "string" and length > 0 and . != "*" and . != "NaN/*")] | unique | .[] | gsub("\\$"; "$$") | "    - name: \(tojson)\n      provider:\n        reference: NaN"' \
+  if ! jq -r "${jq_filter} | .[] | gsub(\"\\\\\$\"; \"\$\$\") | \"    - name: \(tojson)\n      provider:\n        reference: NaN\"" \
       "$raw_json" > "$snippet" 2>/dev/null; then
     echo "[entrypoint] warning: failed to parse ${models_url}; using baseline models"
     rm -f "$raw_json" "$snippet"

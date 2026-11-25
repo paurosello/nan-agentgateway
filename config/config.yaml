@@ -50,6 +50,7 @@ llm:
         custom:
           formats:
             - type: completions
+            - type: embeddings
       params:
         baseUrl: https://api.nan.builders/v1
         apiKey: "${NAN_API_KEY}"
@@ -65,9 +66,9 @@ llm:
         reference: NaN
 mcp:
   targets: []
-# Rewrite /chat/completions -> /v1/chat/completions so clients configured
-# without a /v1 base URL still hit the completions pipeline (populating
-# Analytics, tokens, and budgets) instead of falling back to passthrough.
+# Rewrite non-/v1 LLM paths to /v1/... so clients configured without a /v1
+# base URL still hit the parsed LLM pipeline (populating Analytics, tokens,
+# and budgets) instead of falling back to passthrough.
 routes:
   - name: rewrite-chat-completions
     matches:
@@ -77,6 +78,36 @@ routes:
       urlRewrite:
         path:
           full: /v1/chat/completions
+    backends:
+      - host: 127.0.0.1:4000
+  - name: rewrite-responses
+    matches:
+      - path:
+          exact: /responses
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/responses
+    backends:
+      - host: 127.0.0.1:4000
+  - name: rewrite-messages
+    matches:
+      - path:
+          exact: /messages
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/messages
+    backends:
+      - host: 127.0.0.1:4000
+  - name: rewrite-embeddings
+    matches:
+      - path:
+          exact: /embeddings
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/embeddings
     backends:
       - host: 127.0.0.1:4000
 
