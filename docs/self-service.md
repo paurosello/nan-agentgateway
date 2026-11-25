@@ -69,8 +69,10 @@ Generate a credential line:
 `generate-config.sh` prompts for the password and prints copy-paste blocks for
 this policy (plus optional provider/model and full config-file templates) —
 already in the form each editor expects. Then in the UI: **Settings → UI → UI
-access policies → Add → Basic auth** (the home page banner's *Configure UI
+access policies → Basic auth** (the home page banner's *Configure UI
 policies* button links to the same page):
+
+![Settings UI access policies](images/ui-auth.png)
 
 | Field | Value |
 |---|---|
@@ -214,7 +216,37 @@ Telling the failures apart:
   policies) are not loaded. Set the original `DATABASE_URL` again once you have
   a working policy.
 - **Stay on one replica.** Two processes on one SQLite file corrupt it. Switch
-  to Postgres (see the main README) before scaling out.
+  to Postgres (below) before scaling out.
+
+## Switching to Postgres
+
+The same image works with Postgres — override the env var and bump replicas if
+needed:
+
+```
+DATABASE_URL=postgres://USER:***@HOST:5432/DBNAME
+```
+
+The database user needs `CREATE TABLE` rights so agentgateway can create its
+schema on first start. `db/` contains a plain PostgreSQL 17 image you can deploy
+as a worker app in the same Space (`POSTGRES_PASSWORD`,
+`POSTGRES_USER=agentgateway`, `POSTGRES_DB=agentgateway`, persistent storage
+enabled at `/data`). If scaling to multiple replicas, also set a shared
+`SESSION_KEY` environment variable so MCP session encryption keys match across
+pods.
+
+### Why `docker-entrypoint.sh` exists
+
+The upstream image (`cr.agentgateway.dev/agentgateway:v1.7.0`) is distroless
+and runs as uid `65532`, while NaN Cloud mounts `/data` root-owned (causing
+SQLite error code 14). Wrapping the binary in `wolfi-base` lets
+`docker-entrypoint.sh` fix `/data` ownership, auto-discover NaN models from
+`/v1/models`, and drop privileges via `su-exec` before exec'ing `agentgateway`.
+
+### Related guides
+
+- [Budgets, Virtual API Keys & NaN Credits](budgets-and-keys.md)
+- [Adding MCP Servers](mcp.md)
 
 ### Why `ui.policies` is not in `config/config.yaml`
 
