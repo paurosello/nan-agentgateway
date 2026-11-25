@@ -19,6 +19,7 @@ COPY --from=upstream /app/agentgateway /app/agentgateway
 
 # Baseline config: read-only in hybrid storage mode, UI/API writes go to the DB.
 COPY config/config.yaml /etc/agentgateway/config.yaml
+COPY config/model-catalog.json /etc/agentgateway/model-catalog.json
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh \

@@ -1,0 +1,97 @@
+{
+  "providers": {
+    "NaN": {
+      "models": {
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4-Flash (4.1-1017 version)",
+          "rates": {
+            "input": "10.50",
+            "cacheRead": "0.21",
+            "output": "42.00"
+          }
+        },
+        "glm5.3-flash": {
+          "name": "GLM 5.3 Flash",
+          "rates": {
+            "input": "5.25",
+            "cacheRead": "1.05",
+            "output": "17.50"
+          }
+        },
+        "mimo-v2.6-flash": {
+          "name": "MiMo V2.6 Flash",
+          "rates": {
+            "input": "7.00",
+            "cacheRead": "0.14",
+            "output": "14.00"
+          }
+        },
+        "qwen3.8-flash": {
+          "name": "Qwen 3.8 Flash",
+          "rates": {
+            "input": "7.50",
+            "cacheRead": "0.80",
+            "output": "23.50"
+          }
+        },
+        "glm5.3": {
+          "name": "GLM 5.3 (full)",
+          "rates": {
+            "input": "49.00",
+            "cacheRead": "9.10",
+            "output": "154.00"
+          }
+        },
+        "kimi-k3.1-pro": {
+          "name": "Kimi K3.1 Pro",
+          "rates": {
+            "input": "100.00",
+            "cacheRead": "10.00",
+            "cacheWrite": "100.00",
+            "output": "500.00"
+          }
+        },
+        "qwen3.8-max": {
+          "name": "Qwen3.8 Max",
+          "rates": {
+            "input": "100.00",
+            "cacheRead": "12.50",
+            "output": "300.00"
+          }
+        },
+        "qwen4-max": {
+          "name": "Qwen4 Max",
+          "rates": {
+            "input": "70.65",
+            "cacheRead": "3.55",
+            "output": "212.00"
+          }
+        },
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4-Pro (0813 version)",
+          "rates": {
+            "input": "66.00",
+            "cacheRead": "2.20",
+            "output": "198.00"
+          }
+        },
+        "hy4": {
+          "name": "Hy4",
+          "rates": {
+            "input": "41.70",
+            "cacheRead": "2.10",
+            "output": "125.05"
+          }
+        },
+        "hy4-flash": {
+          "name": "Hy4 Flash",
+          "rates": {
+            "input": "10.50",
+            "cacheRead": "0.21",
+            "output": "42.00"
+          }
+        }
+      }
+    }
+  }
+}

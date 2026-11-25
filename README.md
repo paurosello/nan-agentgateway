@@ -186,6 +186,7 @@ builds against the same glibc-dynamic runtime. The binary now requires
 ## References
 
 - `config/config.yaml` — baseline config (storage `hybrid`, DB URL from env, UI on 4000).
+- `config/model-catalog.json` — NaN credit rates per 1M tokens (1 credit = $1) for Analytics and Virtual API Key budgets.
 - `docs/self-service.md` — deploying your own instance, enabling auth, and lockout recovery.
 - `scripts/htpasswd.sh` — generates a Basic Auth line for the UI (and the escaped form for the file).
 - `scripts/generate-config.sh` — one command for every copy-paste YAML block (auth policy, provider, model, full config).

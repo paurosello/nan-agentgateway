@@ -153,6 +153,11 @@ step 2. Keep both on.
 - **Model `NaN/*`**: strips the `NaN/` prefix and forwards to `NaN`.
 - **Model `*`**: catch-all that forwards bare model names straight to `NaN`
   (including newly added models before the next restart).
+- **Credit cost catalog** (`config/model-catalog.json`): maps NaN's per-1M-token
+  credit rates (`input`, `cacheRead`, `output`, `cacheWrite`) at **1 credit = $1**,
+  so Analytics costs and Virtual API Key USD budgets map directly to your NaN
+  credit pool (e.g. a `$500` key budget caps that key at 500 credits out of
+  7,000). Edit `config/model-catalog.json` in your fork if NaN updates rates.
 - **Route `rewrite-chat-completions`**: rewrites `POST /chat/completions` to
   `/v1/chat/completions` internally so clients whose base URL omits `/v1` still
   record full Analytics, tokens, and budgets instead of falling back to

@@ -26,6 +26,10 @@ config:
     mode: hybrid
   database:
     url: ${DATABASE_URL}
+  # Credit cost catalog for NaN models (1 credit = 1 USD, per 1M tokens) so
+  # Analytics costs and Virtual API Key USD budgets map 1:1 to NaN credits.
+  modelCatalog:
+    - file: /etc/agentgateway/model-catalog.json
 
 gateways:
   default:

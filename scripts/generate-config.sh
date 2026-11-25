@@ -188,6 +188,8 @@ config:
     mode: hybrid
   database:
     url: \${DATABASE_URL}
+  modelCatalog:
+    - file: /etc/agentgateway/model-catalog.json
 
 gateways:
   default:
