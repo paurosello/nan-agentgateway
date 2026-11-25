@@ -109,7 +109,7 @@ provider:
     formats:
       - type: completions
 params:
-  baseUrl: https://api.nan.builders
+  baseUrl: https://api.nan.builders/v1
   apiKey: ${NAN_API_KEY}
 ```
 
@@ -130,9 +130,19 @@ Clients then call `POST /v1/chat/completions` with `"model": "NaN/<model>"`.
 `params.apiKey` is the one field that hybrid mode still expands from the
 environment, which is why the key never has to be stored anywhere readable.
 
-Without a working upstream key the gateway forwards requests unauthenticated
-and `api.nan.builders` answers with a 404 or `model_not_found` — that is the
-symptom to look for if completions fail.
+`baseUrl` must end in `/v1`. Provider endpoint paths are appended to it, so
+`https://api.nan.builders` becomes `https://api.nan.builders/chat/completions`
+(which NaN answers with `404 Not found.`), while
+`https://api.nan.builders/v1` becomes the correct `/v1/chat/completions`.
+
+Telling the failures apart:
+
+| Response | Cause |
+|---|---|
+| `404 Model not found` with `code: model_not_found` | No `llm.models` entry matches; add the model |
+| `404 Not found.` from upstream | `baseUrl` is missing `/v1` |
+| `401 Invalid API key.` from upstream | `NAN_API_KEY` is unset or empty, so `params.apiKey` expands to nothing |
+| `401 authentication failed` | The gateway rejected the client key: not a valid virtual key, or `apiKey` is `strict` and no key was sent |
 
 ## 4. Invite people with keys, not with the UI password
 

@@ -19,7 +19,7 @@ set -euo pipefail
 user="pau"
 realm="nan-agentgateway"
 model="NaN/*"
-base_url="https://api.nan.builders"
+base_url="https://api.nan.builders/v1"
 env_var="NAN_API_KEY"
 port="4000"
 url=""
@@ -47,7 +47,7 @@ Options:
   -u, --user NAME       username for the htpasswd line   (default: pau)
   -r, --realm NAME      realm in the challenge           (default: nan-agentgateway)
   -m, --model PATTERN   model pattern to expose          (default: NaN/*)
-  -b, --base-url URL    upstream base URL                (default: https://api.nan.builders)
+  -b, --base-url URL    upstream base URL                (default: https://api.nan.builders/v1)
   -e, --env-var NAME    env var holding upstream key     (default: NAN_API_KEY)
   -p, --port PORT       port in the full config file     (default: 4000)
   -U, --url URL         gateway URL used in the curl hints
