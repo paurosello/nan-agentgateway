@@ -8,7 +8,8 @@ If you haven't modified files in your fork:
 
 1. Open your fork on GitHub (`https://github.com/<you>/nan-agentgateway`).
 2. Click **Sync fork → Update branch**.
-3. In [NaN Cloud](https://cloud.nan.builders/spaces), open your gateway app and click **Redeploy**.
+
+NaN Cloud automatically redeploys your app when `main` is updated.
 
 ## Option 2: Sync with Git CLI
 
@@ -26,7 +27,7 @@ git merge upstream/main
 git push origin main
 ```
 
-Then **Redeploy** the app in NaN Cloud.
+NaN Cloud automatically redeploys once `main` is pushed.
 
 ## What survives a redeploy
 
