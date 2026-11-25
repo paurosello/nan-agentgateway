@@ -10,18 +10,20 @@ guide — ask them for a virtual key.
 
 - [1. Deploy](#1-deploy)
 - [2. Lock the UI first](#2-lock-the-ui-first)
-- [3. Add a model](#3-add-a-model)
-- [4. Invite people with keys, not with the UI password](#4-invite-people-with-keys-not-with-the-ui-password)
+- [3. Enable virtual API keys (and invite people)](#3-enable-virtual-api-keys-and-invite-people)
+- [Pre-configured provider and models](#pre-configured-provider-and-models)
 - [Backups, upgrades, and recovery](#backups-upgrades-and-recovery)
 
 ## 1. Deploy
 
-In [NaN Cloud](https://cloud.nan.builders/spaces), open or create a Space, then
+Fork `paurosello/nan-agentgateway` if you want to customize the default provider
+or models in `config/config.yaml` (or deploy it directly as-is). In
+[NaN Cloud](https://cloud.nan.builders/spaces), open or create a Space, then
 **New App**:
 
 | Field | Value |
 |---|---|
-| Repository | `paurosello/nan-agentgateway` (authorize it for the NaN GitHub App) |
+| Repository | your fork of `paurosello/nan-agentgateway` (or `paurosello/nan-agentgateway` directly; authorize it for the NaN GitHub App) |
 | Branch | `main` |
 | Dockerfile | `Dockerfile` |
 | App name | anything, e.g. `my-gateway` (it becomes part of the URL) |
@@ -29,7 +31,7 @@ In [NaN Cloud](https://cloud.nan.builders/spaces), open or create a Space, then
 | Persistent storage | **on** (required; NaN mounts it at `/data`) |
 | Replicas | **1** (SQLite must not be shared) |
 | Resources | `500m` / `512Mi` is enough |
-| Environment | `NAN_API_KEY` = your NaN API key (optional now, used in step 3) |
+| Environment | `NAN_API_KEY` = your NaN API key (recommended to add **after** locking auth in steps 2–3, or lock both immediately after deploy) |
 
 Wait for `Running`, then open:
 
@@ -37,15 +39,18 @@ Wait for `Running`, then open:
 https://<app>-<space>.apps.nan.builders/ui
 ```
 
+> **Lock auth before (or right after) setting `NAN_API_KEY`.** The `NaN`
+> provider and `NaN/*` / `*` models are pre-configured in `config/config.yaml`,
+> so as soon as `NAN_API_KEY` is set, `/v1/chat/completions` is live. Enable
+> both UI auth (step 2) and strict Virtual API Key auth (step 3) before sharing
+> the URL — or deploy without `NAN_API_KEY` first, enable both policies, and
+> add `NAN_API_KEY` afterward.
+
 > **Storage is a creation-time choice.** Persistent storage can only be chosen
 > in the New App form. The app settings panel edits branch, Dockerfile, port, and
 > resources, not storage. If you deployed without it, delete the app and create
 > it again with the same name in the same Space — the URL stays the same — then
 > re-add your configuration.
-
-> **Config-only customization:** deploying this repo directly is fine. If you
-> also want to change the image, entrypoint, or baseline config, fork first and
-> point NaN at your fork.
 
 ## 2. Lock the UI first
 
@@ -62,10 +67,10 @@ Generate a credential line:
 ```
 
 `generate-config.sh` prompts for the password and prints copy-paste blocks for
-this policy, the provider, the model, and the full config file — already in the
-form each editor expects. Then in the UI: **Settings → UI → UI access policies →
-Add → Basic auth** (the home page banner's *Configure UI policies* button links
-to the same page):
+this policy (plus optional provider/model and full config-file templates) —
+already in the form each editor expects. Then in the UI: **Settings → UI → UI
+access policies → Add → Basic auth** (the home page banner's *Configure UI
+policies* button links to the same page):
 
 | Field | Value |
 |---|---|
@@ -95,59 +100,11 @@ Keycloak — GitHub is OAuth2 only) plus a client ID/secret and an absolute
 callback URL on your app's host. On 1.7, set `credentials: sessionOrBearer` so
 the same policy also accepts bearer ID tokens from CLI clients.
 
-## 3. Add a model
+## 3. Enable virtual API keys (and invite people)
 
-The provider key stays out of the UI and out of the database: set the
-`NAN_API_KEY` environment variable on the app, then reference it.
-
-**LLM → Providers → Add provider**, open the raw (`<>`) toggle, and use:
-
-```yaml
-name: NaN
-provider:
-  custom:
-    formats:
-      - type: completions
-params:
-  baseUrl: https://api.nan.builders/v1
-  apiKey: ${NAN_API_KEY}
-```
-
-**LLM → Models → Add model**, raw toggle:
-
-```yaml
-name: NaN/*
-provider:
-  reference: NaN
-transformation:
-  model: 'llmRequest.model.stripPrefix("NaN/")'
-```
-
-Every form has that raw toggle, so pasted YAML like this is always accepted, and
-fields the form does not model survive a save.
-
-Clients then call `POST /v1/chat/completions` with `"model": "NaN/<model>"`.
-`params.apiKey` is the one field that hybrid mode still expands from the
-environment, which is why the key never has to be stored anywhere readable.
-
-`baseUrl` must end in `/v1`. Provider endpoint paths are appended to it, so
-`https://api.nan.builders` becomes `https://api.nan.builders/chat/completions`
-(which NaN answers with `404 Not found.`), while
-`https://api.nan.builders/v1` becomes the correct `/v1/chat/completions`.
-
-Telling the failures apart:
-
-| Response | Cause |
-|---|---|
-| `404 Model not found` with `code: model_not_found` | No `llm.models` entry matches; add the model |
-| `404 Not found.` from upstream | `baseUrl` is missing `/v1` |
-| `401 Invalid API key.` from upstream | `NAN_API_KEY` is unset or empty, so `params.apiKey` expands to nothing |
-| `401 authentication failed` | The gateway rejected the client key: not a valid virtual key, or `apiKey` is `strict` and no key was sent |
-
-## 4. Invite people with keys, not with the UI password
-
-Anyone with the UI credential can read your provider key from `/api/config` and
-remove your auth policy. For other people, mint keys instead:
+The `NaN` provider and `NaN/*` / `*` models are already pre-configured in
+`config/config.yaml`, so you do not need to add them in the UI. Lock down
+`/v1/*` and mint keys for yourself or other people:
 
 **LLM → Virtual API Keys → Enable API key auth → `Strict` → New key**
 
@@ -158,29 +115,72 @@ Per key you can set:
 - **allowed models**, so a key can only call what it should,
 - the key value itself, or let the UI generate one.
 
+If you did not set `NAN_API_KEY` at deploy time, add it to the app's environment
+variables now and redeploy. Anyone with the UI credential can change your config
+and remove your auth policy, so never share the UI password — hand out virtual
+keys instead.
+
 Keys are stored hashed, usage and cost are attributed per key in
-**Analytics / Logs**, and revoking one key does not touch anyone else. Users
-send:
+**Analytics / Logs**, and revoking one key does not touch anyone else. Clients
+can send either bare model names (`*`) or `NaN/<model>` (`NaN/*`):
 
 ```sh
 curl https://<app>-<space>.apps.nan.builders/v1/chat/completions \
   -H "Authorization: Bearer vk-alice-..." \
   -H "content-type: application/json" \
-  -d '{"model":"NaN/<model>","messages":[{"role":"user","content":"hi"}]}'
+  -d '{"model":"<model>","messages":[{"role":"user","content":"hi"}]}'
 ```
 
 Note that the gateway-level `apiKey` policy applies to the LLM and MCP traffic
 on the gateway, not to `/ui` and `/api`; those are covered by `ui.policies` from
 step 2. Keep both on.
 
+## Pre-configured provider and models
+
+`config/config.yaml` ships with:
+
+- **Provider `NaN`**: `custom` (`completions` format), `baseUrl: https://api.nan.builders/v1`,
+  and `apiKey: "${NAN_API_KEY}"`. The image defaults `NAN_API_KEY=""` so the
+  gateway still boots when it is unset, and `/api/config` returns the
+  unexpanded `${NAN_API_KEY}` reference rather than the raw secret.
+- **Model `NaN/*`**: strips the `NaN/` prefix and forwards to `NaN`.
+- **Model `*`**: catch-all that forwards bare model names straight to `NaN`.
+
+Because these live in `config/config.yaml`, they are **file-owned** (read-only
+in the UI):
+
+- To change or remove the defaults (for example, drop `*` or point at a
+  different upstream), edit `config/config.yaml` in your fork and redeploy.
+- To add **extra** providers or models alongside `NaN`, add them in the UI
+  (**LLM → Providers / Models**); hybrid mode merges DB resources over the file
+  baseline, and more specific model patterns take precedence over `*`.
+- Upgrading an existing instance that already added `NaN` or `NaN/*` in SQLite?
+  Delete the DB copies before redeploying so they do not collide with the
+  file-owned entries.
+
+`baseUrl` must end in `/v1`. Provider endpoint paths are appended to it, so
+`https://api.nan.builders` becomes `https://api.nan.builders/chat/completions`
+(which NaN answers with `404 Not found.`), while
+`https://api.nan.builders/v1` becomes the correct `/v1/chat/completions`.
+
+Telling the failures apart:
+
+| Response | Cause |
+|---|---|
+| `404 Model not found` with `code: model_not_found` | No `llm.models` entry matches |
+| `404 Not found.` from upstream | `baseUrl` is missing `/v1` |
+| `401 Invalid API key.` from upstream | `NAN_API_KEY` is unset or empty, so `params.apiKey` expands to nothing |
+| `401 authentication failed` | The gateway rejected the client key: not a valid virtual key, or `apiKey` is `strict` and no key was sent |
+
 ## Backups, upgrades, and recovery
 
 - **State** lives in `/data/agentgateway.db*` on the persistent volume. That
-  includes everything you created in the UI: providers, models, virtual keys,
-  routes, MCP targets, and the auth policy. Back the volume up before deleting
-  the app. If the UI stops asking for a password after a redeploy, the app is
-  not mounting its volume — check **Advanced options → Persistent storage** in
-  Nan; without it `/data` is container-local and every redeploy starts empty.
+  includes everything you created in the UI: extra providers/models, virtual
+  keys, routes, MCP targets, and the auth policies. Back the volume up before
+  deleting the app. If the UI stops asking for a password after a redeploy, the
+  app is not mounting its volume — check **Advanced options → Persistent
+  storage** in NaN; without it `/data` is container-local and every redeploy
+  starts empty.
 - **Upgrades**: change `ARG AGENTGATEWAY_VERSION` in the `Dockerfile`, push,
   redeploy. Database resources carry over. The first start on 1.7 migrates the
   request-log database (new analytics columns); let it finish.
@@ -188,10 +188,10 @@ step 2. Keep both on.
   the unauthenticated admin listener on `:15000` is loopback-only, so recover by
   pointing the app at a fresh database:
   `DATABASE_URL=sqlite:///data/recover.db` → redeploy → the UI opens again.
-  The file baseline is untouched, but the resources in the old database
-  (models, keys, policies) are not loaded. Keep your provider/model definitions
-  somewhere you can paste them back, and set the original `DATABASE_URL` again
-  once you have a working policy.
+  The file baseline (including the `NaN` provider and `NaN/*` / `*` models) is
+  untouched, while the resources in the old database (extra models, keys,
+  policies) are not loaded. Set the original `DATABASE_URL` again once you have
+  a working policy.
 - **Stay on one replica.** Two processes on one SQLite file corrupt it. Switch
   to Postgres (see the main README) before scaling out.
 

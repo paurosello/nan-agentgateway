@@ -31,8 +31,33 @@ gateways:
   default:
     port: 4000
 
-# Empty sections that let the UI manage LLM, MCP, and traffic resources.
-llm: {}
+# Empty/baseline sections that let the UI manage LLM, MCP, and traffic
+# resources. The NaN provider and models below are file-owned (read-only in the
+# UI); edit them in your fork if you want different defaults, or add extra
+# providers/models alongside them in the UI.
+#
+# apiKey references NAN_API_KEY from the container environment. The entrypoint
+# defaults NAN_API_KEY to empty so the gateway still boots when it is unset,
+# and /api/config returns the unexpanded reference rather than the raw key.
+llm:
+  providers:
+    - name: NaN
+      provider:
+        custom:
+          formats:
+            - type: completions
+      params:
+        baseUrl: https://api.nan.builders/v1
+        apiKey: "${NAN_API_KEY}"
+  models:
+    - name: NaN/*
+      provider:
+        reference: NaN
+      transformation:
+        model: 'llmRequest.model.stripPrefix("NaN/")'
+    - name: "*"
+      provider:
+        reference: NaN
 mcp:
   targets: []
 routes: []

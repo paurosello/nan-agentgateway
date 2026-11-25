@@ -14,6 +14,10 @@ set -eu
 APP_UID=65532
 APP_GID=65532
 
+# Default NAN_API_KEY to empty so the pre-configured NaN provider in
+# config/config.yaml still boots cleanly before the user sets their key.
+export NAN_API_KEY="${NAN_API_KEY:-}"
+
 if [ "$(id -u)" = "0" ]; then
   url="${DATABASE_URL:-}"
   case "$url" in

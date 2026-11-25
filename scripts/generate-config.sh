@@ -193,7 +193,25 @@ gateways:
   default:
     port: ${port}
 
-llm: {}
+llm:
+  providers:
+    - name: NaN
+      provider:
+        custom:
+          formats:
+            - type: completions
+      params:
+        baseUrl: ${base_url}
+        apiKey: "\${${env_var}}"
+  models:
+    - name: ${model}
+      provider:
+        reference: NaN
+      transformation:
+        model: 'llmRequest.model.stripPrefix("${prefix}/")'
+    - name: "*"
+      provider:
+        reference: NaN
 mcp:
   targets: []
 routes: []
@@ -233,8 +251,8 @@ emit() {
 echo
 echo "Generated for user '${user}'. Copy each block into the place named above it."
 emit "1) Settings > UI > UI access policies > Basic auth > raw (<>) mode" "ui-basic-auth.yaml" "$ui_policy"
-emit "2) LLM > Providers > Add provider > raw (<>) mode" "provider.yaml" "$provider"
-emit "3) LLM > Models > Add model > raw (<>) mode" "model.yaml" "$model_yaml"
+emit "2) LLM > Providers > Add provider > raw (<>) mode (optional: NaN is already in config/config.yaml)" "provider.yaml" "$provider"
+emit "3) LLM > Models > Add model > raw (<>) mode (optional: NaN/* and * are already in config/config.yaml)" "model.yaml" "$model_yaml"
 emit "4) config/config.yaml (GitOps; do not paste this into the Raw Configuration page in hybrid mode - Save is disabled there)" "config.yaml" "$file_config"
 
 printf '\n%s=== Check%s\n\n' "$bold" "$reset"

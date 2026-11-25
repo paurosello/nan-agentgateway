@@ -32,27 +32,31 @@ with SQLite or Postgres — only the env var changes.
    - **Persistent storage**: enable (NaN mounts it at `/data`).
    - **Replicas**: keep at **1** — SQLite must not be shared between pods.
    - Resources: `500m` / `512Mi` is plenty for a single gateway.
-4. Environment variables: **none required**. The image defaults to
-   `DATABASE_URL=sqlite:///data/agentgateway.db`. Add `NAN_API_KEY` if you want
-   the UI to reference your upstream key without storing it (see step 3 of
-   [docs/self-service.md](docs/self-service.md)).
+4. Environment variables: the image defaults to
+   `DATABASE_URL=sqlite:///data/agentgateway.db`. Set `NAN_API_KEY` for the
+   pre-configured `NaN` provider (boots cleanly if unset; recommended to add
+   after locking auth, or lock both `/ui` and `/v1/*` immediately after deploy —
+   see [docs/self-service.md](docs/self-service.md)).
 
 Deploy, then open `https://<app-domain>/ui`.
 
-> **Secure the UI before you share the URL.** The UI is the admin plane: it can
-> read `/api/config` (including provider keys) and rewrite the whole gateway
-> config, including auth policies. See [Security model](#security-model).
+> **Secure the UI and `/v1/*` before you share the URL.** The UI is the admin
+> plane (it can read `/api/config` and rewrite the whole gateway config), and
+> the pre-configured `NaN` provider / `*` model make `/v1/chat/completions` live
+> as soon as `NAN_API_KEY` is set. See [Security model](#security-model).
 
 ### Give someone their own instance
 
-Each person deploys the same repo into their own Space. Nothing is shared, so
-nobody can read or change anybody else's configuration. Full walkthrough:
+Each person forks (or deploys directly) this repo into their own Space. Nothing
+is shared, so nobody can read or change anybody else's configuration, and
+forking lets each person customize the baseline provider/models in
+`config/config.yaml`. Full walkthrough:
 [docs/self-service.md](docs/self-service.md). Short version — **New App**,
-repository `paurosello/nan-agentgateway` (or a fork), port `4000`, persistent
+repository your fork (or `paurosello/nan-agentgateway`), port `4000`, persistent
 storage on, **1 replica**, resources `500m`/`512Mi`.
 
 Prefer to keep one gateway and give people access without the UI? Mint virtual
-API keys instead; see step 4 of the same guide.
+API keys instead; see step 3 of the same guide.
 
 ### Why the entrypoint exists
 
@@ -118,13 +122,18 @@ apps is not guaranteed; SQLite avoids the question entirely.
 
 ## After the first start
 
-1. **Secure the UI** (Settings → UI). This is not optional if the app
-   is reachable from the internet; see [Security model](#security-model).
-2. The baseline config defines no LLM providers, models, MCP targets, or routes.
-   Add them in the UI (`/ui` → LLM / MCP). Because storage mode is `hybrid`,
-   those resources are written to the database, not the config file, so they
-   survive restarts and redeploys. They live in `/data/agentgateway.db` — back
-   that file up (or copy it out) before deleting the app.
+1. **Secure the UI** (Settings → UI) and **enable strict Virtual API Key auth**
+   (LLM → Virtual API Keys → *Enable API key auth* → `Strict`). Both are
+   required before sharing the URL or setting `NAN_API_KEY`; see
+   [Security model](#security-model).
+2. The baseline `config/config.yaml` pre-configures the `NaN` provider
+   (`https://api.nan.builders/v1`, reading `NAN_API_KEY` at runtime) and the
+   `NaN/*` and `*` models, so you can mint virtual API keys and start sending
+   requests right away. Edit `config/config.yaml` in your fork to change those
+   defaults, or add extra LLM providers/models, MCP targets, and routes in the
+   UI (`/ui` → LLM / MCP). Because storage mode is `hybrid`, UI-managed
+   resources are written to `/data/agentgateway.db` and survive restarts and
+   redeploys — back that file up before deleting the app.
 3. If you expect other people, decide between **their own instance**
    ([docs/self-service.md](docs/self-service.md)) and **virtual API keys**
    (LLM → Virtual API Keys). Sharing the UI credential gives away admin.
