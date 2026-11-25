@@ -4,15 +4,21 @@ Standalone [agentgateway](https://agentgateway.dev) (OSS, Apache-2.0) packaged f
 [NaN Cloud](https://nan.builders/docs/apps): one HTTP port, UI enabled, **SQLite
 on the persistent volume** by default (Postgres optional, same image).
 
+This repo doubles as a **template for one gateway per person**: every deployment
+is independent — own URL, own UI, own volume, own credentials. If you are
+deploying your own copy, follow [docs/self-service.md](docs/self-service.md)
+instead of this file.
+
 ## What it runs
 
 | | |
 |---|---|
-| Image | `cr.agentgateway.dev/agentgateway:v1.6.0` (binary copied into `wolfi-base`) |
+| Image | `cr.agentgateway.dev/agentgateway:v1.7.0` (binary copied into `wolfi-base`) |
 | Port | `4000` — proxy, config API, and UI |
 | UI | `https://<app-domain>/ui` |
 | Storage | `hybrid` — baseline from `config/config.yaml`, UI/API writes in the database |
 | Database | `DATABASE_URL`, default `sqlite:///data/agentgateway.db` |
+| UI auth | **none by default** — enable `ui.policies` in Settings ([why](docs/self-service.md#2-lock-the-ui-first)) |
 
 There is no custom build step: the version is an `ARG`, and the same image works
 with SQLite or Postgres — only the env var changes.
@@ -27,14 +33,32 @@ with SQLite or Postgres — only the env var changes.
    - **Replicas**: keep at **1** — SQLite must not be shared between pods.
    - Resources: `500m` / `512Mi` is plenty for a single gateway.
 4. Environment variables: **none required**. The image defaults to
-   `DATABASE_URL=sqlite:///data/agentgateway.db`.
+   `DATABASE_URL=sqlite:///data/agentgateway.db`. Add `NAN_API_KEY` if you want
+   the UI to reference your upstream key without storing it (see step 3 of
+   [docs/self-service.md](docs/self-service.md)).
 
 Deploy, then open `https://<app-domain>/ui`.
 
+> **Secure the UI before you share the URL.** The UI is the admin plane: it can
+> read `/api/config` (including provider keys) and rewrite the whole gateway
+> config, including auth policies. See [Security model](#security-model).
+
+### Give someone their own instance
+
+Each person deploys the same repo into their own Space. Nothing is shared, so
+nobody can read or change anybody else's configuration. Full walkthrough:
+[docs/self-service.md](docs/self-service.md). Short version — **New App**,
+repository `paurosello/nan-agentgateway` (or a fork), port `4000`, persistent
+storage on, **1 replica**, resources `500m`/`512Mi`.
+
+Prefer to keep one gateway and give people access without the UI? Mint virtual
+API keys instead; see step 4 of the same guide.
+
 ### Why the entrypoint exists
 
-The upstream image is Wolfi-based and distroless (no shell, runs as uid 65532).
-NaN mounts persistent storage **root-owned** at `/data`, and SQLite then fails
+The upstream runtime image is Chainguard's `glibc-dynamic` (Wolfi-based and
+distroless: no shell, runs as uid 65532, binary at `/app/agentgateway`). NaN
+mounts persistent storage **root-owned** at `/data`, and SQLite then fails
 with `unable to open database file (code: 14)`. So this image copies the same
 binary into `wolfi-base`, starts as root, chowns the SQLite directory on the
 volume, and `su-exec`s down to uid 65532 before starting the gateway. If the
@@ -42,6 +66,38 @@ container is started as non-root by the platform, that step is skipped.
 
 Verified: root-owned `0755 /data` volume → gateway boots, creates
 `/data/agentgateway.db*`, `/ui` returns `200`.
+
+## Security model
+
+There are two planes and they use different policies:
+
+| Plane | Paths | Policy | Notes |
+|---|---|---|---|
+| Admin | `/ui`, `/api/*` | `ui.policies` | Protects the UI **and** the config API it calls |
+| Data | LLM (`/v1/*`), MCP (`/mcp`, `/sse`) | gateway / `llm.policies` / `mcp.policies` | What your users actually call |
+
+The UI is a **full admin** in agentgateway OSS: an authenticated user can read
+`/api/config` (including provider API keys), save any change, and remove the
+auth policy. Fine-grained roles (`admin` / `viewer` / `self-service` presets)
+are a Solo Enterprise feature and are not in the OSS schema (verified against
+1.7.0). Practical consequences:
+
+- **Lock the UI first.** Settings → UI → Basic auth (`mode: strict`) or OIDC.
+  `./scripts/htpasswd.sh <user>` prints the line. Until then, anyone who
+  finds the URL can rewrite the gateway, read logs, and send traffic.
+- **Do not share the UI credential with end users.** Give them virtual API keys
+  instead (LLM → Virtual API Keys → *Enable API key auth* → `Strict`), with
+  per-key budgets, allowed models, and per-key usage reporting.
+- **Keep `ui.policies` in the database.** A policy defined in
+  `config/config.yaml` is file-owned, so the UI cannot edit it (`409 conflict`).
+  The database copy is editable in the UI but has no shell-free recovery; the
+  procedure is in [docs/self-service.md](docs/self-service.md).
+- **`$` escaping depends on the plane.** Resources saved through the UI are
+  stored verbatim with no environment expansion — paste `$2y$...` as-is. The
+  config *file* is env-expanded — use `$$2y$$...` there.
+- `config.adminAddr` (default `localhost:15000`) always bypasses `ui.policies`,
+  but it is loopback-only and NaN exposes only port `4000`, so it is not
+  reachable from the internet.
 
 ### Switching to Postgres
 
@@ -62,26 +118,53 @@ apps is not guaranteed; SQLite avoids the question entirely.
 
 ## After the first start
 
-The baseline config defines no LLM providers, models, MCP targets, or routes.
-Add them in the UI (`/ui` → LLM / MCP). Because storage mode is `hybrid`, those
-resources are written to the database, not the config file, so they survive
-restarts and redeploys. They live in `/data/agentgateway.db` — back that file up
-(or copy it out) before deleting the app.
+1. **Secure the UI** (Settings → UI). This is not optional if the app
+   is reachable from the internet; see [Security model](#security-model).
+2. The baseline config defines no LLM providers, models, MCP targets, or routes.
+   Add them in the UI (`/ui` → LLM / MCP). Because storage mode is `hybrid`,
+   those resources are written to the database, not the config file, so they
+   survive restarts and redeploys. They live in `/data/agentgateway.db` — back
+   that file up (or copy it out) before deleting the app.
+3. If you expect other people, decide between **their own instance**
+   ([docs/self-service.md](docs/self-service.md)) and **virtual API keys**
+   (LLM → Virtual API Keys). Sharing the UI credential gives away admin.
 
 ## Upgrade agentgateway
 
-Change the `ARG` in the `Dockerfile` and push:
+Change the `ARG` in the `Dockerfile` and push, then redeploy the app in NaN.
+Resources stored in the database carry over.
 
 ```dockerfile
-ARG AGENTGATEWAY_VERSION=v1.6.0
+ARG AGENTGATEWAY_VERSION=v1.7.0
 ```
 
-Check <https://github.com/agentgateway/agentgateway/releases> for the tag, then
-redeploy the app in NaN. Resources stored in the database carry over.
+Check <https://github.com/agentgateway/agentgateway/releases> for the tag. The
+wrapper needs no changes: 1.7.0 keeps the binary at `/app/agentgateway` and
+builds against the same glibc-dynamic runtime. The binary now requires
+`GLIBC_2.39`, and `wolfi-base:latest` ships 2.44 — do not pin an older base.
+
+### Upgrading 1.6 → 1.7
+
+- **First start migrates the request-log database.** New analytics columns are
+  added and backfilled. Quick on SQLite; on a large Postgres allow time and do
+  not interrupt it.
+- **MCP session IDs are now always encrypted.** The key is generated on first
+  start and stored in the database (the `/etc` config is read-only), so there is
+  nothing to configure. MCP sessions opened before the upgrade are rejected and
+  clients start new ones. Set `config.session.key: disabled` only if you
+  deliberately want unencrypted sessions.
+- **Settings is a top-level page now**, and every form has a raw YAML mode that
+  preserves fields the form does not model. UI edits no longer drop
+  hand-written settings.
+- **Prompt guards inspect tool output by default**, and error responses no
+  longer include internal detail (check the logs instead). Neither affects this
+  baseline config.
 
 ## References
 
 - `config/config.yaml` — baseline config (storage `hybrid`, DB URL from env, UI on 4000).
+- `docs/self-service.md` — deploying your own instance, enabling auth, and lockout recovery.
+- `scripts/htpasswd.sh` — generates a Basic Auth line for the UI (and the escaped form for the file).
 - `docker-entrypoint.sh` — /data ownership fix + privilege drop.
 - `db/` — fallback PostgreSQL image (only needed if you prefer Postgres).
 - `debug/` — connectivity probe app for in-Space DNS/TCP troubleshooting.

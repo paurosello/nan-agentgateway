@@ -12,9 +12,14 @@
 # SQLite path. On SQLite, run exactly one replica.
 #
 # hybrid storage: this file is a read-only baseline; anything you add or edit
-# in the UI (LLM providers, models, MCP targets, routes) is stored in the
-# database and merged over the file at read time. So UI changes survive
-# restarts and redeploys without baking secrets into the image.
+# in the UI (LLM providers, models, MCP targets, routes, auth policies) is
+# stored in the database and merged over the file at read time. So UI changes
+# survive restarts and redeploys without baking secrets into the image.
+#
+# The UI can only store resources inside a section that already exists here,
+# because hybrid mode never writes this file. Keep the empty sections below:
+# without them, "Enable" in the UI fails with
+# "File configuration is read-only in hybrid mode".
 
 config:
   storage:
@@ -26,5 +31,16 @@ gateways:
   default:
     port: 4000
 
+# Empty sections that let the UI manage LLM, MCP, and traffic resources.
+llm: {}
+mcp:
+  targets: []
+routes: []
+
 ui:
   gateways: default
+  # ui.policies is intentionally absent so that it stays editable in the UI
+  # (Settings -> UI). A policy defined in this file becomes file-owned
+  # and the UI rejects saves for it with a 409 conflict. The trade-off: a
+  # database-stored auth policy has no shell-free recovery except deploying with
+  # a fresh DATABASE_URL. See docs/self-service.md.
