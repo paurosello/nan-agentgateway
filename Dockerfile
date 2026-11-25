@@ -13,7 +13,7 @@ FROM cr.agentgateway.dev/agentgateway:${AGENTGATEWAY_VERSION} AS upstream
 
 FROM cgr.dev/chainguard/wolfi-base:latest
 
-RUN apk add --no-cache su-exec ca-certificates-bundle
+RUN apk add --no-cache su-exec ca-certificates-bundle curl jq
 
 COPY --from=upstream /app/agentgateway /app/agentgateway
 

@@ -128,12 +128,15 @@ apps is not guaranteed; SQLite avoids the question entirely.
    [Security model](#security-model).
 2. The baseline `config/config.yaml` pre-configures the `NaN` provider
    (`https://api.nan.builders/v1`, reading `NAN_API_KEY` at runtime) and the
-   `NaN/*` and `*` models, so you can mint virtual API keys and start sending
-   requests right away. Edit `config/config.yaml` in your fork to change those
-   defaults, or add extra LLM providers/models, MCP targets, and routes in the
-   UI (`/ui` → LLM / MCP). Because storage mode is `hybrid`, UI-managed
-   resources are written to `/data/agentgateway.db` and survive restarts and
-   redeploys — back that file up before deleting the app.
+   `NaN/*` and `*` models, and `docker-entrypoint.sh` auto-discovers every
+   individual model from `https://api.nan.builders/v1/models` at startup when
+   `NAN_API_KEY` is set (so they show up in `/v1/models`, Playground, and
+   virtual-key allowed-models pickers; set `NAN_DISCOVER_MODELS=false` to
+   disable). Edit `config/config.yaml` in your fork to change those defaults,
+   or add extra LLM providers/models, MCP targets, and routes in the UI
+   (`/ui` → LLM / MCP). Because storage mode is `hybrid`, UI-managed resources
+   are written to `/data/agentgateway.db` and survive restarts and redeploys —
+   back that file up before deleting the app.
 3. If you expect other people, decide between **their own instance**
    ([docs/self-service.md](docs/self-service.md)) and **virtual API keys**
    (LLM → Virtual API Keys). Sharing the UI credential gives away admin.

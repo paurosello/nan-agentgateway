@@ -204,6 +204,7 @@ llm:
         baseUrl: ${base_url}
         apiKey: "\${${env_var}}"
   models:
+    # @NAN_DISCOVERED_MODELS@
     - name: ${model}
       provider:
         reference: NaN

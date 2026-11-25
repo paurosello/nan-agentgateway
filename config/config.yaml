@@ -50,6 +50,7 @@ llm:
         baseUrl: https://api.nan.builders/v1
         apiKey: "${NAN_API_KEY}"
   models:
+    # @NAN_DISCOVERED_MODELS@
     - name: NaN/*
       provider:
         reference: NaN
