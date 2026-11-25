@@ -1,18 +1,17 @@
-# nan-agentgateway
+# AgentGateway for NaN Cloud
 
-Your own [agentgateway](https://agentgateway.dev) (v1.7.0, OSS) on [NaN Cloud](https://cloud.nan.builders/spaces) — pre-wired for the NaN Inference API (`api.nan.builders`).
-
-Deploy it in 2 minutes, lock the UI, and mint **Virtual API Keys** with **NaN credit budgets**, model restrictions, per-key analytics, and a shared **MCP server gateway**.
+Run your own [agentgateway](https://agentgateway.dev) (v1.7.0, OSS) on [NaN Cloud](https://cloud.nan.builders/spaces) — pre-wired for the NaN Inference API (`api.nan.builders`) with zero YAML setup.
 
 ![Analytics showing NaN model spend in credits (1 credit = $1)](docs/images/analytics.png)
 
-## What works out of the box
+## Why run this?
 
-- **Pre-configured `NaN` provider** (`https://api.nan.builders/v1`), reading `NAN_API_KEY` from the container environment (never stored in the DB or leaked by `/api/config`).
-- **Auto-discovered models**: fetches your available chat & embedding models from `/v1/models` on startup (with `NaN/*` and `*` fallbacks).
-- **1:1 NaN credit cost tracking**: [config/model-catalog.json](config/model-catalog.json) maps **1 NaN credit = $1**, so Analytics and Virtual API Key USD budgets track your 7,000-credit pool directly.
-- **Drop-in client support**: works with OpenAI Chat Completions, Embeddings, Anthropic `/v1/messages` (Claude Code), and OpenAI `/v1/responses` (Codex) — even for clients that omit `/v1` in their base URL.
-- **SQLite on `/data`** (hybrid mode): UI changes survive restarts and redeploys without an external database.
+- **Multiple Virtual API Keys** — issue separate keys per app (`opencode`, Cursor, Claude Code) or teammate without ever sharing your real `NAN_API_KEY`.
+- **Budgets per API key (`$1 = 1 NaN credit`)** — agentgateway displays costs and budgets in `$`, and [config/model-catalog.json](config/model-catalog.json) maps **1 NaN credit = $1** (a 7,000-credit plan = `$7,000`, a `$500` budget = 500 credits, blocking overages with `429`).
+- **Single MCP server to add everywhere** — configure remote MCP servers once in the UI and point all your editors/agents at one `/mcp` endpoint.
+- **Add other providers alongside NaN** — plug in OpenAI, Anthropic, Gemini, or custom endpoints in the UI (built-in cost catalog preserved).
+- **Custom rate limits & policies** — configure per-key/model rate limits, model allowlists, prompt guardrails, and CEL policies from the UI.
+- **Zero-config NaN defaults** — pre-configured `NaN` provider, startup `/v1/models` auto-discovery, OpenAI/Anthropic/Responses/Embeddings support (even without `/v1`), and persistent SQLite on `/data`.
 
 ---
 
@@ -35,16 +34,13 @@ Wait for `Running`, then open `https://<app>-<space>.apps.nan.builders/ui`.
 
 ### 2. Lock the UI first
 
-The UI is the admin plane — lock it before sharing the URL. Generate a Basic Auth line locally:
+The UI is the admin plane — lock it before sharing the URL. Generate the Basic Auth YAML locally:
 
 ```sh
 ./scripts/htpasswd.sh <your-username>
 ```
 
-Then in the UI: **Settings → UI → Basic auth**:
-- **Mode:** `Strict`
-- **Realm:** anything (e.g. `my-gateway`)
-- **htpasswd:** paste the generated `<user>:$2y$...` line as-is and save.
+Then in the UI: **Settings → UI → Basic auth**, toggle raw (`<>`) mode, paste the generated YAML block, and save.
 
 ### 3. Enable Virtual API Keys & mint a key
 
@@ -54,11 +50,15 @@ Never share your UI password or raw `NAN_API_KEY` with tools or teammates — gi
 
 ![Virtual API Keys with credit budgets and model restrictions](docs/images/virtual-keys.png)
 
-Optionally attach a **USD budget** (mapped 1:1 to NaN credits, e.g. `$500` = 500 credits) and **allowed models**.
+Optionally attach a **USD budget** and **allowed models**. Because **`$1 = 1 NaN credit`**, setting a `$500` / 30d budget caps that key at **500 NaN credits** (out of your 7,000-credit allowance) and blocks further calls with `429`.
 
 ### 4. Point your AI clients at your gateway
 
-Use your gateway URL and the virtual key you just created (`agw_sk_...`):
+Open **LLM → Client Setup** (`/ui/llm/client-setup`) to generate ready-to-paste configs for **OpenCode**, **Claude Code**, **Cursor**, **Codex**, and more using your virtual key (`agw_sk_...`):
+
+![Client Setup generating an OpenCode config](docs/images/client-setup-opencode.png)
+
+Or test directly with `curl`:
 
 ```sh
 curl https://<app>-<space>.apps.nan.builders/v1/chat/completions \

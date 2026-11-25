@@ -59,18 +59,18 @@ configuration, including provider API keys, and it can turn authentication off
 again. Until you add an auth policy, anyone who finds the URL is a full admin.
 The home page shows a matching warning banner.
 
-Generate a credential line:
+Generate the Basic Auth YAML block:
 
 ```sh
-./scripts/generate-config.sh            # everything below, hashed and filled in
-./scripts/htpasswd.sh alice             # only the credential line
+./scripts/htpasswd.sh alice             # ready-to-paste Basic auth YAML
+./scripts/generate-config.sh            # same, plus full config.yaml template
 ```
 
-`generate-config.sh` prompts for the password and prints copy-paste blocks for
-this policy (plus optional provider/model and full config-file templates) —
-already in the form each editor expects. Then in the UI: **Settings → UI → UI
-access policies → Basic auth** (the home page banner's *Configure UI
-policies* button links to the same page):
+Both scripts prompt for the password and print copy-paste YAML blocks already in
+the form each editor expects. Then in the UI: **Settings → UI → UI access
+policies → Basic auth** (the home page banner's *Configure UI policies* button
+links to the same page), toggle raw (`<>`) mode, paste the block, and save — or
+fill the form fields:
 
 ![Settings UI access policies](images/ui-auth.png)
 
