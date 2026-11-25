@@ -214,7 +214,17 @@ llm:
         reference: NaN
 mcp:
   targets: []
-routes: []
+routes:
+  - name: rewrite-chat-completions
+    matches:
+      - path:
+          exact: /chat/completions
+    policies:
+      urlRewrite:
+        path:
+          full: /v1/chat/completions
+    backends:
+      - host: 127.0.0.1:${port}
 
 ui:
   gateways: default

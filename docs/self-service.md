@@ -145,6 +145,10 @@ step 2. Keep both on.
   unexpanded `${NAN_API_KEY}` reference rather than the raw secret.
 - **Model `NaN/*`**: strips the `NaN/` prefix and forwards to `NaN`.
 - **Model `*`**: catch-all that forwards bare model names straight to `NaN`.
+- **Route `rewrite-chat-completions`**: rewrites `POST /chat/completions` to
+  `/v1/chat/completions` internally so clients whose base URL omits `/v1` still
+  record full Analytics, tokens, and budgets instead of falling back to
+  passthrough.
 
 Because these live in `config/config.yaml`, they are **file-owned** (read-only
 in the UI):
