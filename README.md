@@ -132,7 +132,12 @@ apps is not guaranteed; SQLite avoids the question entirely.
 ## Upgrade agentgateway
 
 Change the `ARG` in the `Dockerfile` and push, then redeploy the app in NaN.
-Resources stored in the database carry over.
+Resources stored in the database carry over **only if the app really mounts its
+persistent volume** — verify with `Settings → UI` after the deploy: if the UI
+stops asking for a password, the volume was replaced and the database is gone.
+That is also what happens if the app was created without *Persistent storage*:
+`/data` is then container-local and every redeploy starts from an empty
+database.
 
 ```dockerfile
 ARG AGENTGATEWAY_VERSION=v1.7.0

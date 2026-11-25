@@ -156,7 +156,9 @@ step 2. Keep both on.
 - **State** lives in `/data/agentgateway.db*` on the persistent volume. That
   includes everything you created in the UI: providers, models, virtual keys,
   routes, MCP targets, and the auth policy. Back the volume up before deleting
-  the app.
+  the app. If the UI stops asking for a password after a redeploy, the app is
+  not mounting its volume — check **Advanced options → Persistent storage** in
+  Nan; without it `/data` is container-local and every redeploy starts empty.
 - **Upgrades**: change `ARG AGENTGATEWAY_VERSION` in the `Dockerfile`, push,
   redeploy. Database resources carry over. The first start on 1.7 migrates the
   request-log database (new analytics columns); let it finish.
